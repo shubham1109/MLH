@@ -1,0 +1,56 @@
+<!doctype html>
+<head>
+
+</head>
+<body><script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+
+	<script>
+	function loadDoc(para) {
+var json='{"requests": [{"image": {"source": {"imageUri": "'+para+'"}},"features": [{"type": "LABEL_DETECTION"}]}]}';
+  var xhttp = new XMLHttpRequest();
+  xhttp.onreadystatechange = function() {
+    if (this.readyState == 4 && this.status == 200) {
+     console.log(this.responseText);
+    }
+  };
+  xhttp.open("POST","https://vision.googleapis.com/v1/images:annotate?key=AIzaSyBdlDrv72DJTtaWdOkcqoyVkMrDbXa8_H0", true);
+  xhttp.send(json);
+}
+
+
+function uploadFile() {
+var blobFile;
+if (($("#filechooser"))[0].files.length > 0) {
+    blobFile = ($("#filechooser"))[0].files[0];
+} else {
+console.log("No file Choosen");
+}
+	
+var formData = new FormData();
+    formData.append("image", blobFile);
+
+    $.ajax({
+       url: "https://api.imgur.com/3/upload",
+       type: "POST",
+      
+   	 datatype: "json",
+	headers: {
+      "Authorization": "Client-ID aae737a5290d8f5"
+    }, 
+	data: formData,
+       processData: false,
+       contentType: false,
+       success: function(response) {
+		console.log(response.data.link);
+		loadDoc(response.data.link);
+       },
+       error: function(jqXHR, textStatus, errorMessage) {
+           console.log(errorMessage);
+       }
+    });
+}
+	</script>
+<input type="file" id="filechooser">
+<button onClick="uploadFile()">submit</button>
+</body>
+
