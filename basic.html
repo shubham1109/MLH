@@ -1,0 +1,118 @@
+<!Doctype html>
+
+<html lang="en">
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+	<title>WebcamJS Test Page</title>
+	<style type="text/css">
+		body { font-family: Helvetica, sans-serif; }
+		h2, h3 { margin-top:0; }
+		form { margin-top: 15px; }
+		form > input { margin-right: 15px; }
+		#results { float:right; margin:20px; padding:20px; border:1px solid; background:#ccc; }
+	</style>
+</head>
+<body>
+	<div id="results"></div>
+
+	<div  id="my_camera"></div>
+	<form>
+		<input type=button value="Take Snapshot" onClick="take_snapshot()">
+	</form>
+	<script type="text/javascript" src="webcam.js"></script>
+<div >
+	<ul id="predictions">
+	</ul>
+</div>
+	<script language="JavaScript">
+		Webcam.set({
+			width: 320,
+			height: 240,
+			image_format: 'jpeg',
+			jpeg_quality: 90
+		});
+		Webcam.attach( '#my_camera' );
+	</script>
+
+	
+
+	<script language="JavaScript">
+		function take_snapshot() {
+			Webcam.snap( function(data_uri) {
+				document.getElementById('results').innerHTML =
+					'<h2>Here is your image:</h2>' +
+					'<img src="'+data_uri+'"/>';
+					uploadFile(data_uri);
+				console.log(data_uri);
+			} );
+		}
+	</script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+
+	<script>
+//VISION API REQUEST
+	function loadDoc(para) {
+var json='{"requests": [{"image": {"source": {"imageUri": "'+para+'"}},"features": [{"type": "LABEL_DETECTION"}]}]}';
+  var xhttp = new XMLHttpRequest();
+  xhttp.onreadystatechange = function() {
+    if (this.readyState == 4 && this.status == 200) {
+		var a = JSON.parse(this.responseText);
+     console.log(a.responses[0].labelAnnotations);
+     var i=0;
+     while(i<a.responses[0].labelAnnotations.length){
+		 document.getElementById("predictions").innerHTML += '<li>'+a.responses[0].labelAnnotations[i].description+'</li>';
+		 i++;
+	 }
+     
+    }
+  };
+  xhttp.open("POST","https://vision.googleapis.com/v1/images:annotate?key=AIzaSyBdlDrv72DJTtaWdOkcqoyVkMrDbXa8_H0", true);
+  xhttp.send(json);
+}
+
+//UPLOAD file to IMGUR
+function uploadFile(dataUri) {
+var formData = new FormData();
+    formData.append("image", dataURItoBlob(dataUri));
+
+    $.ajax({
+       url: "https://api.imgur.com/3/upload",
+       type: "POST",
+      
+   	 datatype: "json",
+	headers: {
+      "Authorization": "Client-ID aae737a5290d8f5"
+    }, 
+	data: formData,
+       processData: false,
+       contentType: false,
+       success: function(response) {
+		console.log(response.data.link);
+		loadDoc(response.data.link);
+       },
+       error: function(jqXHR, textStatus, errorMessage) {
+           console.log(errorMessage);
+       }
+    });
+}
+//CONVERT DATAURI to BLOB
+function dataURItoBlob(dataURI) {
+   var byteString;
+    if (dataURI.split(',')[0].indexOf('base64') >= 0)
+        byteString = atob(dataURI.split(',')[1]);
+    else
+        byteString = unescape(dataURI.split(',')[1]);
+
+    var mimeString = dataURI.split(',')[0].split(':')[1].split(';')[0];
+
+    var ia = new Uint8Array(byteString.length);
+    for (var i = 0; i < byteString.length; i++) {
+        ia[i] = byteString.charCodeAt(i);
+    }
+
+    return new Blob([ia], {type:mimeString});
+}
+	</script>
+
+</body>
+</html>
